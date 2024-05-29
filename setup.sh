@@ -13,6 +13,7 @@ configure_privacy() {
     gsettings set org.gnome.desktop.privacy hide-identity true
     gsettings set org.gnome.desktop.privacy report-technical-problems false
     gsettings set org.gnome.desktop.privacy send-software-usage-stats false
+    gsettings set org.gnome.desktop.media-handling autorun-never true
 }
 
 configure_security() {
@@ -176,6 +177,47 @@ load_keybindings() {
     fi
 }
 
+blacklist_modules() {
+echo -e "
+blacklist mac_hid
+blacklist parport_pc
+blacklist parport
+blacklist lp
+blacklist ppdev
+blacklist floppy
+blacklist arkfb
+blacklist aty128fb
+blacklist atyfb
+blacklist radeonfb
+blacklist cyber2000fb
+blacklist pcmcia
+blacklist yenta_socket
+blacklist ax25
+blacklist netrom
+blacklist x25
+blacklist appletalk
+blacklist parport
+blacklist parport_pc" | sudo tee /etc/modprobe.d/nomisc.conf
+}
+btrfs_tweaks(){
+sudo systemctl enable btrfs-scrub@home.timer
+sudo systemctl enable btrfs-scrub@-.timer
+sudo btrfs property set / compression lz4
+sudo btrfs property set /home compression lz4
+sudo btrfs filesystem defragment -r -v -clz4 /
+sudo chattr +c /
+sudo btrfs filesystem defragment -r -v -clz4 /home
+sudo chattr +c /home
+sudo btrfs balance start -musage=0 -dusage=50 /
+sudo btrfs balance start -musage=0 -dusage=50 /home
+sudo chattr +C /swapfile
+}
+disk_tweaks(){
+echo -e "Apply disk tweaks"
+sudo sed -i -e 's| defaults| rw,lazytime,relatime,commit=3600,delalloc,nobarrier,nofail,discard|g' /etc/fstab
+sudo sed -i -e 's| errors=remount-ro| rw,lazytime,relatime,commit=3600,delalloc,nobarrier,nofail,discard,errors=remount-ro|g' /etc/fstab
+}
+
 # Main Function
 main() {
     configure_privacy
@@ -190,13 +232,16 @@ main() {
     install_zellij
     install_fish_bat
     install_latex
-    install_wezterm
+    install_flatpaks
     install_thorium
     install_lazygit
+    blacklist_modules
+    #Uncomment this if you use btrfs
+    #btrfs_tweaks
+    disk_tweaks
     copy_config_files
     load_keybindings
     echo "Setup complete!"
 }
 
 main
-
