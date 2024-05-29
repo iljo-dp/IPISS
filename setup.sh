@@ -32,9 +32,9 @@ configure_tmpfs() {
     sudo sed -i '/^\/\/tmpfs/d' /etc/fstab
     echo -e "tmpfs /var/tmp tmpfs nodiratime,nodev,nosuid,mode=1777,size=300m 0 0
 tmpfs /var/log tmpfs nodiratime,nodev,nosuid,mode=1777,size=300m 0 0
-tmpfs /var/run tmpfs nodiratime,nodev,nosuid,mode=1777,size=300m 0 0
+tmpfs /var/run tmpfs nodiratime,nodev,nosuid,mode=1777,size=500m 0 0
 tmpfs /var/lock tmpfs nodiratime,nodev,nosuid,mode=1777,size=300m 0 0
-tmpfs /var/cache tmpfs nodiratime,nodev,nosuid,mode=1777,size=300m 0 0
+tmpfs /var/cache tmpfs nodiratime,nodev,nosuid,mode=1777,size=1450m 0 0
 tmpfs /var/volatile tmpfs nodiratime,nodev,nosuid,mode=1777,size=300m 0 0
 tmpfs /var/spool tmpfs nodiratime,nodev,nosuid,mode=1777,size=300m 0 0
 tmpfs /media tmpfs nodiratime,nodev,nosuid,mode=1777,size=300m 0 0
@@ -223,7 +223,8 @@ main() {
     configure_privacy
     configure_security
     configure_mouse
-    configure_tmpfs
+    #This currently breaks some stuff, fixing it soon:tm:
+    #configure_tmpfs
     disable_bluetooth_autostart
     configure_fail2ban
     install_neovim
