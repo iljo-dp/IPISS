@@ -49,6 +49,9 @@ disable_bluetooth_autostart() {
 }
 
 configure_fail2ban() {
+    sudo apt install fail2ban
+    sudo mkdir -p /etc/fail2ban/
+    sudo touch  /etc/fail2ban/jail.local
     echo "Configuring Fail2Ban..."
     echo -e "[DEFAULT]
 ignoreip = 127.0.0.1/8 ::1
@@ -110,7 +113,7 @@ install_zellij() {
 
 install_fish_bat() {
     echo "Installing Fish and Bat..."
-    sudo apt install -y fish bat ripgrep fzf htop powertop prelink preload fail2ban
+    sudo apt install -y fish bat ripgrep fzf htop powertop prelink preload gh
 
     echo "Changing default shell to Fish..."
     chsh -s /usr/bin/fish
@@ -124,7 +127,7 @@ install_latex() {
 install_wezterm() {
     echo "Installing WezTerm..."
     sudo apt install -y flatpak
-    flatpak install -y flathub org.wezfurlong.wezterm
+    #flatpak install -y flathub org.wezfurlong.wezterm
 }
 
 install_thorium() {
