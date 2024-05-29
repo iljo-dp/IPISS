@@ -1,19 +1,19 @@
-require("theprimeagen.set")
-require("theprimeagen.remap")
-require("theprimeagen.lazy_init")
+require("iljo.set")
+require("iljo.remap")
+require("iljo.lazy_init")
 require('java').setup()
 require('lspconfig').jdtls.setup({})
 
 -- lazy_init.lua
 
-require("theprimeagen.lazy.convert_and_view").setup()
+require("iljo.lazy.convert_and_view").setup()
 
 -- Setup keybindings
-vim.api.nvim_set_keymap('n', '<Space>cp', ':lua require("theprimeagen.lazy.convert_and_view").convertAndViewPDF()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<Space>cp', ':lua require("iljo.lazy.convert_and_view").convertAndViewPDF()<CR>', { noremap = true, silent = true })
 
 
 local augroup = vim.api.nvim_create_augroup
-local theprimeagenGroup = augroup('theprimeagen', {})
+local iljoGroup = augroup('iljo', {})
 
 local autocmd = vim.api.nvim_create_autocmd
 local yank_group = augroup('HighlightYank', {})
@@ -40,13 +40,13 @@ autocmd('TextYankPost', {
 })
 
 autocmd({"BufWritePre"}, {
-    group = theprimeagenGroup,
+    group = iljoGroup,
     pattern = "*",
     command = [[%s/\s\+$//e]],
 })
 
 autocmd('LspAttach', {
-    group = theprimeagenGroup,
+    group = iljoGroup,
     callback = function(e)
         local opts = { buffer = e.buf }
         vim.keymap.set("n", "gd", function() vim.lsp.buf.definition() end, opts)

@@ -1,4 +1,4 @@
--- ~/.config/nvim/lua/theprimeagen/lazy/convert_and_view.lua
+-- ~/.config/nvim/lua/iljo/lazy/convert_and_view.lua
 
 local M = {}
 
@@ -24,7 +24,7 @@ function M.convertAndViewPDF()
 end
 
 function M.setup()
-    vim.api.nvim_set_keymap('n', '<Space>cp', ':lua require("theprimeagen.lazy.convert_and_view").convertAndViewPDF()<CR>', { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('n', '<Space>cp', ':lua require("iljo.lazy.convert_and_view").convertAndViewPDF()<CR>', { noremap = true, silent = true })
 end
 
 return setmetatable({}, {

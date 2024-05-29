@@ -1,5 +1,5 @@
 return {
-    "theprimeagen/vim-be-good",
+    "iljo/vim-be-good",
 
     dependencies = {
         "nvim-lua/plenary.nvim"

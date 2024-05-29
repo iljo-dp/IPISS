@@ -162,10 +162,14 @@ copy_config_files() {
     cp -r config/* ~/.config/
 }
 
-source_fish_config() {
-    echo "Sourcing the new Fish configuration..."
-    if [ -f ~/.config/fish/config.fish ]; then
-        source ~/.config/fish/config.fish
+load_keybindings() {
+    keybindings_file="./config/gnome_keybindings_backup.txt"
+
+    if [ -f "$keybindings_file" ]; then
+        dconf load /org/gnome/desktop/wm/keybindings/ < "$keybindings_file"
+        echo "Keybindings loaded successfully."
+    else
+        echo "Keybindings file not found."
     fi
 }
 
@@ -187,7 +191,7 @@ main() {
     install_thorium
     install_lazygit
     copy_config_files
-    source_fish_config
+    load_keybindings
     echo "Setup complete!"
 }
 
