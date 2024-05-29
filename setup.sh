@@ -124,10 +124,13 @@ install_latex() {
     sudo apt install -y texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra
 }
 
-install_wezterm() {
+install_flatpaks() {
     echo "Installing WezTerm..."
     sudo apt install -y flatpak
-    #flatpak install -y flathub org.wezfurlong.wezterm
+    flatpak install -y flathub org.wezfurlong.wezterm
+	flatpak install flathub md.obsidian.Obsidian -y
+   	flatpak install flathub com.jetbrains.IntelliJ-IDEA-Ultimate -y
+
 }
 
 install_thorium() {
