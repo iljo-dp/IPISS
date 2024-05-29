@@ -110,7 +110,8 @@ install_zellij() {
 
 install_fish_bat() {
     echo "Installing Fish and Bat..."
-    sudo apt install -y fish bat
+    sudo apt install -y fish bat ripgrep fzf htop powertop prelink preload fail2ban
+
     echo "Changing default shell to Fish..."
     chsh -s /usr/bin/fish
 }
