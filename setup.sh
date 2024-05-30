@@ -29,17 +29,19 @@ configure_mouse() {
 
 configure_tmpfs() {
     echo "Configuring tmpfs ramdisk..."
-    sudo sed -i '/^\/\/tmpfs/d' /etc/fstab
-    echo -e "tmpfs /var/tmp tmpfs nodiratime,nodev,nosuid,mode=1777,size=300m 0 0
-tmpfs /var/log tmpfs nodiratime,nodev,nosuid,mode=1777,size=300m 0 0
-tmpfs /var/run tmpfs nodiratime,nodev,nosuid,mode=1777,size=500m 0 0
-tmpfs /var/lock tmpfs nodiratime,nodev,nosuid,mode=1777,size=300m 0 0
-tmpfs /var/cache tmpfs nodiratime,nodev,nosuid,mode=1777,size=1450m 0 0
-tmpfs /var/volatile tmpfs nodiratime,nodev,nosuid,mode=1777,size=300m 0 0
-tmpfs /var/spool tmpfs nodiratime,nodev,nosuid,mode=1777,size=300m 0 0
-tmpfs /media tmpfs nodiratime,nodev,nosuid,mode=1777,size=300m 0 0
-tmpfs /dev/shm tmpfs nodiratime,nodev,nosuid,mode=1777,size=300m 0 0" | sudo tee -a /etc/fstab
+    sudo sed -i '/^tmpfs/d' /etc/fstab
+    
+    echo -e "tmpfs /var/tmp tmpfs nodiratime,nodev,nosuid,mode=1777,size=500m 0 0
+tmpfs /var/log tmpfs nodiratime,nodev,nosuid,mode=1777,size=500m 0 0
+tmpfs /var/run tmpfs nodiratime,nodev,nosuid,mode=1777,size=1g 0 0
+tmpfs /var/lock tmpfs nodiratime,nodev,nosuid,mode=1777,size=500m 0 0
+tmpfs /var/cache tmpfs nodiratime,nodev,nosuid,mode=1777,size=2g 0 0
+tmpfs /var/volatile tmpfs nodiratime,nodev,nosuid,mode=1777,size=500m 0 0
+tmpfs /var/spool tmpfs nodiratime,nodev,nosuid,mode=1777,size=500m 0 0
+tmpfs /media tmpfs nodiratime,nodev,nosuid,mode=1777,size=500m 0 0
+tmpfs /dev/shm tmpfs nodiratime,nodev,nosuid,mode=1777,size=500m 0 0" | sudo tee -a /etc/fstab
 }
+
 
 disable_bluetooth_autostart() {
     echo "Disabling Bluetooth autostart..."
@@ -50,7 +52,7 @@ disable_bluetooth_autostart() {
 }
 
 configure_fail2ban() {
-    sudo apt install fail2ban
+    sudo apt install -y fail2ban
     sudo mkdir -p /etc/fail2ban/
     sudo touch  /etc/fail2ban/jail.local
     echo "Configuring Fail2Ban..."
@@ -199,6 +201,7 @@ blacklist appletalk
 blacklist parport
 blacklist parport_pc" | sudo tee /etc/modprobe.d/nomisc.conf
 }
+
 btrfs_tweaks(){
 sudo systemctl enable btrfs-scrub@home.timer
 sudo systemctl enable btrfs-scrub@-.timer
@@ -212,19 +215,38 @@ sudo btrfs balance start -musage=0 -dusage=50 /
 sudo btrfs balance start -musage=0 -dusage=50 /home
 sudo chattr +C /swapfile
 }
-disk_tweaks(){
-echo -e "Apply disk tweaks"
-sudo sed -i -e 's| defaults| rw,lazytime,relatime,commit=3600,delalloc,nobarrier,nofail,discard|g' /etc/fstab
-sudo sed -i -e 's| errors=remount-ro| rw,lazytime,relatime,commit=3600,delalloc,nobarrier,nofail,discard,errors=remount-ro|g' /etc/fstab
+disk_tweaks() {
+    echo -e "Apply disk tweaks"
+    sudo systemctl enable fstrim.timer
+    sudo sed -i -e 's| defaults| rw,lazytime,relatime,commit=3600,delalloc,nobarrier,nofail,discard|g' /etc/fstab
+    sudo sed -i -e 's| errors=remount-ro| rw,lazytime,relatime,commit=3600,delalloc,nobarrier,nofail,discard,errors=remount-ro|g' /etc/fstab
+}
+remove_unnecessary_packages() {
+    echo "Removing unnecessary packages..."
+    sudo apt purge -y thunderbird libreoffice-common firefox
+    sudo apt autoremove -y
+}
+reduce_swappiness(){
+    echo "Reducing swappiness..."
+    echo "vm.swappiness=10" | sudo tee -a /etc/sysctl.conf
+    sudo sysctl -p
 }
 
+zswap_configuration() {
+    echo "Configuring Zswap..."
+    echo "zswap.enabled=1" | sudo tee -a /etc/default/grub
+    echo "zswap.compressor=lz4" | sudo tee -a /etc/default/grub
+    echo "zswap.max_pool_percent=20" | sudo tee -a /etc/default/grub
+    echo "zswap.zpool=z3fold" | sudo tee -a /etc/default/grub
+    sudo update-grub
+}
 # Main Function
 main() {
     configure_privacy
     configure_security
     configure_mouse
     #This currently breaks some stuff, fixing it soon:tm:
-    #configure_tmpfs
+    configure_tmpfs
     disable_bluetooth_autostart
     configure_fail2ban
     install_neovim
@@ -240,6 +262,9 @@ main() {
     #Uncomment this if you use btrfs
     #btrfs_tweaks
     disk_tweaks
+    remove_unnecessary_packages
+    reduce_swappiness
+    #zswap_configuration
     copy_config_files
     load_keybindings
     echo "Setup complete!"
