@@ -3,6 +3,12 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
+# Check if the script is run as root
+if [ "$EUID" -eq 0 ]; then
+  echo "Please run this script without sudo."
+  exit 1
+fi
+
 # Privacy and Security Settings
 configure_privacy() {
     echo "Configuring privacy settings..."
@@ -42,7 +48,6 @@ tmpfs /media tmpfs nodiratime,nodev,nosuid,mode=1777,size=500m 0 0
 tmpfs /dev/shm tmpfs nodiratime,nodev,nosuid,mode=1777,size=500m 0 0" | sudo tee -a /etc/fstab
 }
 
-
 disable_bluetooth_autostart() {
     echo "Disabling Bluetooth autostart..."
     sudo sed -i 's/AutoEnable.*/AutoEnable = false/' /etc/bluetooth/main.conf
@@ -54,7 +59,7 @@ disable_bluetooth_autostart() {
 configure_fail2ban() {
     sudo apt install -y fail2ban
     sudo mkdir -p /etc/fail2ban/
-    sudo touch  /etc/fail2ban/jail.local
+    sudo touch /etc/fail2ban/jail.local
     echo "Configuring Fail2Ban..."
     echo -e "[DEFAULT]
 ignoreip = 127.0.0.1/8 ::1
@@ -114,7 +119,7 @@ install_zellij() {
     echo "Zellij installation completed successfully."
 }
 
-install_fish_bat() {
+install_normal_programs() {
     echo "Installing Fish and Bat..."
     sudo apt install -y fish bat ripgrep fzf htop powertop prelink preload gh
 
@@ -131,9 +136,8 @@ install_flatpaks() {
     echo "Installing WezTerm..."
     sudo apt install -y flatpak
     flatpak install -y flathub org.wezfurlong.wezterm
-	flatpak install flathub md.obsidian.Obsidian -y
-   	flatpak install flathub com.jetbrains.IntelliJ-IDEA-Ultimate -y
-
+    flatpak install flathub md.obsidian.Obsidian -y
+    flatpak install flathub com.jetbrains.IntelliJ-IDEA-Ultimate -y
 }
 
 install_thorium() {
@@ -202,31 +206,35 @@ blacklist parport
 blacklist parport_pc" | sudo tee /etc/modprobe.d/nomisc.conf
 }
 
-btrfs_tweaks(){
-sudo systemctl enable btrfs-scrub@home.timer
-sudo systemctl enable btrfs-scrub@-.timer
-sudo btrfs property set / compression lz4
-sudo btrfs property set /home compression lz4
-sudo btrfs filesystem defragment -r -v -clz4 /
-sudo chattr +c /
-sudo btrfs filesystem defragment -r -v -clz4 /home
-sudo chattr +c /home
-sudo btrfs balance start -musage=0 -dusage=50 /
-sudo btrfs balance start -musage=0 -dusage=50 /home
-sudo chattr +C /swapfile
+btrfs_tweaks() {
+    echo "Running Btrfs tweaks..."
+    sudo systemctl enable btrfs-scrub@home.timer
+    sudo systemctl enable btrfs-scrub@-.timer
+    sudo btrfs property set / compression lz4
+    sudo btrfs property set /home compression lz4
+    sudo btrfs filesystem defragment -r -v -clz4 /
+    sudo chattr +c /
+    sudo btrfs filesystem defragment -r -v -clz4 /home
+    sudo chattr +c /home
+    sudo btrfs balance start -musage=0 -dusage=50 /
+    sudo btrfs balance start -musage=0 -dusage=50 /home
+    sudo chattr +C /swapfile
 }
+
 disk_tweaks() {
     echo -e "Apply disk tweaks"
     sudo systemctl enable fstrim.timer
     sudo sed -i -e 's| defaults| rw,lazytime,relatime,commit=3600,delalloc,nobarrier,nofail,discard|g' /etc/fstab
     sudo sed -i -e 's| errors=remount-ro| rw,lazytime,relatime,commit=3600,delalloc,nobarrier,nofail,discard,errors=remount-ro|g' /etc/fstab
 }
+
 remove_unnecessary_packages() {
     echo "Removing unnecessary packages..."
     sudo apt purge -y thunderbird libreoffice-common firefox
     sudo apt autoremove -y
 }
-reduce_swappiness(){
+
+reduce_swappiness() {
     echo "Reducing swappiness..."
     echo "vm.swappiness=10" | sudo tee -a /etc/sysctl.conf
     sudo sysctl -p
@@ -240,33 +248,42 @@ zswap_configuration() {
     echo "zswap.zpool=z3fold" | sudo tee -a /etc/default/grub
     sudo update-grub
 }
+
 # Main Function
 main() {
     configure_privacy
     configure_security
     configure_mouse
-    #This currently breaks some stuff, fixing it soon:tm:
-    configure_tmpfs
     disable_bluetooth_autostart
     configure_fail2ban
     install_neovim
     install_starship
     install_eza
     install_zellij
-    install_fish_bat
+    install_normal_programs
     install_latex
     install_flatpaks
     install_thorium
     install_lazygit
-    blacklist_modules
-    #Uncomment this if you use btrfs
-    #btrfs_tweaks
     disk_tweaks
     remove_unnecessary_packages
-    reduce_swappiness
-    #zswap_configuration
     copy_config_files
     load_keybindings
+
+    # Ask the user if they want to run experimental tweaks
+    read -p "Do you want to run experimental tweaks? (y/N): " run_experimental
+    if [[ "$run_experimental" == "y" || "$run_experimental" == "Y" ]]; then
+	    configure_tmpfs
+     	    blacklist_modules
+	    zswap_configuration
+     	    reduce_swappiness
+    fi
+    
+    read -p "Do you want to run BTRFS tweaks? (y/N): " run_btrfs
+    if [[ "$run_btrfs" == "y" || "$run_btrfs" == "Y" ]]; then
+	btrfs_tweaks
+    fi
+
     echo "Setup complete!"
 }
 
