@@ -80,10 +80,10 @@ EOL
 # Installation Functions
 install_neovim() {
   log "Installing Neovim..."
-  curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
-  sudo rm -rf /opt/nvim
-  sudo tar -C /opt -xzf nvim-linux64.tar.gz
-  sudo rm -rf nvim-linux64*
+  cd ~/Downloads
+  wget -O nvim-linux64.tar.gz "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz"
+  sudo rm -rf /usr/local/bin/nvim  # Remove any existing binary to avoid conflicts
+  sudo tar -C /usr/local/bin -xzf nvim-linux64.tar.gz --strip-components=2 nvim-linux64/bin/nvim
 }
 
 install_starship() {
